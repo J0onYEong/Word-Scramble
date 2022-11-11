@@ -18,9 +18,20 @@ struct ContentView: View {
     
     @FocusState private var isFocused
     
+    @State private var userScore: Int = 0
+    private let scorePerLetter: Int = 10
+    
     var body: some View {
         NavigationView {
             List {
+                Section {
+                    HStack {
+                        Spacer()
+                        Text(rootWord)
+                            .font(.largeTitle)
+                        Spacer()
+                    }
+                }
                 Section {
                     TextField("enter your word", text: $newWord)
                         .textInputAutocapitalization(.never)
@@ -36,7 +47,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .navigationTitle(rootWord)
+            .navigationTitle("Score: \(userScore)")
             .onSubmit(addNewWord)
             .onAppear(perform: startGame)
             .alert(alertTitle, isPresented: $isShowing) {
@@ -47,14 +58,19 @@ struct ContentView: View {
             } message: {
                 Text(alertMessage)
             }
+            .toolbar {
+                Button("Restart") {
+                    resetGame()
+                }
+            }
         }
     }
     
     func addNewWord() {
         let answer = newWord.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        guard answer.count > 0 else {
-            wordError(title: "Empty word", message: "the word is empty")
+        guard answer.count > 2 else {
+            wordError(title: "Short word", message: "the word can't be shorter than two letters.")
             return;
         }
         guard isOriginal(word: answer) else {
@@ -70,14 +86,17 @@ struct ContentView: View {
             return;
         }
         
+        //word is accord to all validations.
+        userScore += scorePerLetter * answer.count
         withAnimation {
             usedWords.insert(answer, at: 0)
         }
         newWord = ""
-        startGame()
     }
     
     func startGame() {
+        //reseting written letters
+        newWord = ""
         if let fileName = Bundle.main.url(forResource: "start", withExtension: "txt") {
             if let startWords = try? String(contentsOf: fileName) {
                 let allWords = startWords.components(separatedBy: "\n")
@@ -89,11 +108,17 @@ struct ContentView: View {
         }
         fatalError("Could not load start.txt from bundle.")
     }
+    
+    func resetGame() {
+        userScore = 0
+        usedWords = [String]()
+        startGame()
+    }
     /// Checking inserting word is alreay injected to usedWords property.
     func isOriginal(word: String) -> Bool {
         !usedWords.contains(word)
     }
-    /// Checking inserting word is formed in letters from rootWord.
+    /// Checking inserting word is formed from root word' letters.
     func isPossible(word: String) -> Bool {
         var copy = rootWord
         for letter in word {
