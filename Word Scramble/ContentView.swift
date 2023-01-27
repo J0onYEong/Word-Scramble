@@ -27,10 +27,14 @@ struct ContentView: View {
                 Section {
                     HStack {
                         Spacer()
-                        Text(rootWord)
-                            .font(.largeTitle)
+                            .accessibilityLabel("root word")
+                        ForEach(rootWord.map {$0}, id: \.self) { char in
+                            Text(String(char))
+                                .font(.largeTitle)
+                        }
                         Spacer()
                     }
+                    .accessibilityElement(children: .combine)
                 }
                 Section {
                     TextField("enter your word", text: $newWord)
@@ -44,6 +48,8 @@ struct ContentView: View {
                             Image(systemName: "\(word.count).circle")
                             Text(word)
                         }
+                        .accessibilityElement()
+                        .accessibilityLabel("\(word), \(word.count) letters")
                     }
                 }
             }
